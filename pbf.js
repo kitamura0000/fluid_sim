@@ -1,5 +1,8 @@
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
+//////////////////////////////
+// 基本設定
+//////////////////////////////
 
 const NUM_PARTICLES = 500;
 const H = 0.1;
@@ -7,12 +10,16 @@ const REST_DENSITY = 1000;
 const EPSILON = 100;
 const DT = 0.016;
 const ITER = 3;
-
+//////////////////////////////
+// ボトル（円柱）境界
+//////////////////////////////
 
 const BOTTLE_RADIUS = 0.3;
 const BOTTLE_HEIGHT = 1.2;
 const BOTTLE_CENTER = new THREE.Vector3(0, 0, 0);
-
+//////////////////////////////
+// Three.js
+//////////////////////////////
 
 const scene = new THREE.Scene();
 
@@ -23,6 +30,14 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
+const bottleGeo = new THREE.CylinderGeometry(
+    BOTTLE_RADIUS,
+    BOTTLE_RADIUS,
+    BOTTLE_HEIGHT,
+    32,
+    1,
+    true
+);
 
 const bottleMat = new THREE.MeshBasicMaterial({
     color: 0xffffff,
@@ -33,7 +48,9 @@ const bottleMat = new THREE.MeshBasicMaterial({
 const bottleMesh = new THREE.Mesh(bottleGeo, bottleMat);
 bottleMesh.position.y = BOTTLE_HEIGHT / 2;
 scene.add(bottleMesh);
-
+//////////////////////////////
+// 粒子
+//////////////////////////////
 
 let particles = [];
 
@@ -50,6 +67,9 @@ for(let i=0;i<NUM_PARTICLES;i++){
     });
 }
 
+//////////////////////////////
+// 描画
+//////////////////////////////
 
 const geo = new THREE.BufferGeometry();
 
@@ -67,7 +87,9 @@ const mat = new THREE.PointsMaterial({
 const points = new THREE.Points(geo, mat);
 scene.add(points);
 
-
+//////////////////////////////
+// SPHカーネル
+//////////////////////////////
 
 function poly6(r){
     let r2 = r.lengthSq();
@@ -82,7 +104,9 @@ function spikyGrad(r){
     return r.clone().normalize().multiplyScalar(coef);
 }
 
-
+//////////////////////////////
+// 近傍探索
+//////////////////////////////
 
 function neighbors(i){
     let list = [];
@@ -143,12 +167,14 @@ function solveBottleCollision(p){
         p.vel.y *= -0.3;
     }
 
-    // 上（開口）
+    // 上（開口してるので軽く外に出たらリスポーン）
     if(p.pos.y > BOTTLE_HEIGHT + 0.2){
         respawnParticle(p);
     }
 }
-
+//////////////////////////////
+// シミュレーション
+//////////////////////////////
 
 function step(){
 
@@ -157,9 +183,9 @@ function step(){
         p.vel.y -= 9.8 * DT;
         p.pos.add(p.vel.clone().multiplyScalar(DT));
     
-    if(p.pos.y < -0.2){
-	repawnParticle(p);
-    }
+	if(p.pos.y < -0.2){
+	    respawnParticle(p);
+	}
     }
 
     for(let k=0;k<ITER;k++){
@@ -233,7 +259,9 @@ function step(){
     }
 }
 
-
+//////////////////////////////
+// ループ
+//////////////////////////////
 
 function animate(){
     requestAnimationFrame(animate);
